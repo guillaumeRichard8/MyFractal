@@ -5,6 +5,8 @@
 #include "pch.h"
 #include "framework.h"
 
+#include <iostream> // <- doit être inclus pour utiliser std::cout et std::endl
+
 // AJOUTS :
 #include <complex>  //  <- doit être inclus pour utiliser std::complex
 #include <cmath>    //  <- doit être inclus pour utiliser sin() et cos()
@@ -182,6 +184,38 @@ void CMyFractalView::OnDraw(CDC* pDC)
         DIB_RGB_COLORS
     );
 
+
+    // =========================================================
+    // AJOUT : AFFICHAGE DE TEXTE PAR-DESSUS LA FRACTALE
+    // =========================================================
+
+    // 1. Rendre le fond du texte transparent (pour ne pas avoir de rectangle noir/blanc derrière le texte)
+    int oldBkMode = pDC->SetBkMode(TRANSPARENT);
+
+    // 2. Choisir la couleur du texte (ex: blanc)
+    COLORREF oldTextColor = pDC->SetTextColor(RGB(255, 255, 255));
+
+    // 3. Préparer le texte à afficher
+    CString strInfo;
+    if (m_bDrawMandelbrot) {
+        strInfo = _T("Mode : Ensemble de Mandelbrot");
+    }
+    else {
+        strInfo.Format(_T("Mode : Ensemble de Julia (c = %.5f + %.5fi)"),
+            m_juliaC.real(), m_juliaC.imag());
+    }
+
+    // 4. Afficher le texte à la position (x=10px, y=10px)
+    pDC->TextOut(10, 10, strInfo);
+
+    // (Optionnel) Afficher du texte aligné ou centré avec DrawText
+    CRect textRect(10, height - 30, width - 10, height - 10);
+    pDC->DrawText(_T("Clic gauche: Mandelbrot | Clic droit: Julia"), &textRect, DT_LEFT | DT_SINGLELINE);
+
+    // 5. Toujours restaurer le CDC dans son état d'origine
+    pDC->SetBkMode(oldBkMode);
+    pDC->SetTextColor(oldTextColor);
+
 }
 
 
@@ -240,8 +274,12 @@ void CMyFractalView::OnRButtonUp(UINT /* nFlags */, CPoint point)
 
     if (width == 0 || height == 0) return;
 
-    m_juliaC = std::complex<double>(-2.0 + (point.x / width) * 3.0, -1.5 + (point.y / height) * 3.0); // Ajustez les valeurs selon vos besoins
+    m_juliaC = std::complex<double>(-0.7, 0.27015); // Ajustez les valeurs selon vos besoins
+
+    std::complex<double> oPointClickR = std::complex<double>(-2.0 + (point.x / width) * 3.0, -1.5 + (point.y / height) * 3.0); // Ajustez les valeurs selon vos besoins
     
+    std::cout << "Point cliqué (complexe) : " << oPointClickR << std::endl;
+
 	m_bDrawMandelbrot = false;  // Passe en mode Julia
     
     Invalidate();               // Force l'appel à OnDraw
